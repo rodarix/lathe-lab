@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lathe Lab — Simulateur de tournage</title>
+  <meta name="description" content="Simulateur 3D interactif d'un tour parallèle conventionnel : sécurité, commandes, conditions de coupe et premier dressage." />
+  <meta name="theme-color" content="#0b0c0f" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <canvas id="gl" tabindex="0" aria-label="Vue 3D du tour"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+
+  <div id="ui">
+    <!-- Colonne gauche : titre + modules pédagogiques -->
+    <div class="col col-left">
+      <header class="brand">
+        <div class="mark">Lathe Lab <span>/ simulateur de tournage</span></div>
+        <h1>Tour parallèle <b>conventionnel</b></h1>
+        <p>Sécurité, commandes, conditions de coupe : manipulez la machine comme à l’atelier.</p>
+      </header>
+      <aside class="rail panel" id="rail"></aside>
+    </div>
+
+    <!-- Barre de vues (haut droite) -->
+    <nav class="topbar panel" id="topbar"></nav>
+
+    <!-- Colonne droite : fiche organe, vue 2D, état machine -->
+    <div class="col col-right">
+      <aside class="detail panel" id="detail" aria-live="polite"></aside>
+      <div class="spacer"></div>
+      <section class="profile panel" id="profile" hidden></section>
+      <section class="status panel" id="status"></section>
+    </div>
+
+    <div class="hint" id="hint"></div>
+    <section class="lesson panel" id="lesson" hidden></section>
+    <div class="notices" id="notices" aria-live="assertive"></div>
+    <section class="dock panel" id="dock"></section>
+    <div class="tooltip" id="tip" hidden></div>
+  </div>
+
+  <div class="overlay" id="help" hidden></div>
+  <div class="overlay" id="welcome" hidden></div>
+  <button class="uipill" id="uipill" hidden>Afficher l’interface <kbd>H</kbd></button>
+
+  <noscript>Lathe Lab nécessite JavaScript et WebGL.</noscript>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

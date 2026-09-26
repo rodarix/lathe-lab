@@ -1,0 +1,19 @@
+{
+  "name": "lathe-lab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Lathe Lab – simulateur interactif de tournage conventionnel (Three.js)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "node tests/sim.test.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  }
+}
