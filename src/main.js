@@ -10,6 +10,7 @@ import { Dock } from './ui/Dock.js';
 import { Detail } from './ui/Detail.js';
 import { Interaction } from './ui/Interaction.js';
 import { ProfileView } from './ui/ProfileView.js';
+import { PartViewer } from './ui/PartViewer.js';
 import { Rail } from './ui/Rail.js';
 import { SafetyModule } from './modules/SafetyModule.js';
 import { ControlsModule } from './modules/ControlsModule.js';
@@ -103,6 +104,7 @@ app.rail = new Rail(app, [app.safety, app.controls, app.cutting]);
 app.dock = new Dock(app);
 app.profile = new ProfileView(app);
 app.interaction = new Interaction(app);
+app.partViewer = new PartViewer(app);
 
 /* ------------------------------------------------------------------ événements */
 const tip = new THREE.Vector3();

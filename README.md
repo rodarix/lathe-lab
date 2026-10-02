@@ -42,6 +42,9 @@ npm run preview   # sert dist/ en local
 - **Leçon guidée** (11 étapes) : prise en main → sécurité → axes Z/X → blocage → passe au chariot supérieur
   → premier dressage → dégagement → bilan chiffré.
 - **Vue 2D** du plan XZ à l'échelle : on y voit pourquoi le talon touche la pièce.
+- **Voir la pièce** (bouton à droite de l'arrêt d'urgence) : vue de dessus, l'élève clique où couper la pièce,
+  puis la pièce coupée s'affiche en 2D avec deux règles graduées en mm (haut et droite) et un cartouche
+  (nom de l'élève, date, matériau, dimensions) : capture d'écran ou « Enregistrer l'image » pour l'envoyer au professeur.
 
 ### Raccourcis
 

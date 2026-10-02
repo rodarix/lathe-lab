@@ -125,12 +125,15 @@ export class Dock {
       h('button', { class: 'btn sm', onclick: () => m.act('safePos'), title: 'Reculer l’outil en position sûre (T)' }, 'Position sûre ', h('kbd', {}, 'T')),
       this.btnProfile);
     this.estop = h('button', { class: 'estop', title: 'Arrêt d’urgence (Échap)', onclick: () => m.act('estop') }, 'ARRÊT', h('br'), 'URGENCE');
+    this.btnPart = h('button', { class: 'partbtn', title: 'Couper la pièce et l’afficher en 2D avec ses règles graduées', onclick: () => app.partViewer?.start() },
+      h('span', { html: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="8" width="11" height="8"/><rect x="14" y="10" width="7" height="4"/><path d="M8.5 4v16" stroke-dasharray="2 2"/></svg>' }),
+      h('span', {}, 'Voir la', h('br'), 'pièce'));
 
     root.append(
       h('div', { class: 'dk dk-axes' }, this.wz.el, dro, this.wx.el, this.wc.el),
       h('span', { class: 'dk-sep' }), feed,
       h('span', { class: 'dk-sep' }), spindle,
-      h('span', { class: 'dk-sep' }), actions, this.estop,
+      h('span', { class: 'dk-sep' }), actions, this.estop, this.btnPart,
     );
 
     // La hauteur réelle du dock pilote la position des panneaux (--dock-h)
