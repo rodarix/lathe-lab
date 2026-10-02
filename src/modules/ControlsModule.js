@@ -1,5 +1,6 @@
 import { h, icon, fmt } from '../ui/dom.js';
 import { PARTS } from '../data/parts.js';
+import { QUILL_MAX } from '../config.js';
 
 const COMMANDS = [
   ['carriageWheel', 'Axe Z · 1 tour = 30 mm'],
@@ -11,7 +12,8 @@ const COMMANDS = [
   ['spindleLever', 'Bouton vert : marche / arrêt broche'],
   ['speedLevers', 'N — broche arrêtée uniquement'],
   ['gearbox', 'Avance f en mm/tr'],
-  ['tailstock', 'Pointe, perçage'],
+  ['tailstock', 'Glisser le long du banc'],
+  ['tailWheel', 'Avance / recul de la pointe'],
   ['brakeBar', 'Arrêt immédiat, au pied'],
   ['estop', 'Coupe tous les mouvements'],
 ];
@@ -66,7 +68,9 @@ export class ControlsModule {
       h('button', { class: `demo${danger ? ' danger' : ''}`, onclick: () => this.runDemo(kind) }, h('b', {}, title), h('span', {}, text));
 
     this.tailOut = h('output', {});
-    this.tailRange = h('input', { type: 'range', min: 0, max: 1, step: 0.001, oninput: (e) => this.setTail(Number(e.target.value)) });
+    this.tailRange = h('input', { type: 'range', min: 0, max: 1, step: 0.001, 'aria-label': 'Position de la contre-poupée sur le banc', oninput: (e) => this.setTail(Number(e.target.value)) });
+    this.quillOut = h('output', {});
+    this.quillRange = h('input', { type: 'range', min: 0, max: QUILL_MAX, step: 0.5, 'aria-label': 'Sortie du fourreau', oninput: (e) => m.act('quill', Number(e.target.value)) });
 
     this.el = h('div', { class: 'mod' },
       h('h2', {}, 'Commandes & mouvements'),
@@ -86,9 +90,11 @@ export class ControlsModule {
         demo('deepFace', 'Danger : dressage trop profond', 'Prise de passe de 10 mm : le talon touche.', true),
         demo('chuck', 'Danger : jusqu’au mandrin', 'L’avance n’est pas débrayée à temps.', true)),
       h('p', { class: 'note' }, 'Les démos préparent la machine automatiquement et ne comptent pas dans le score.'),
-      h('h3', {}, 'Contre-poupée', this.tailOut),
+      h('h3', {}, 'Contre-poupée · position sur le banc', this.tailOut),
       this.tailRange,
-      h('p', { class: 'note' }, 'Approchez la pointe au contact de la face (pièces longues). Le trainard ne peut pas la dépasser.'),
+      h('h3', {}, 'Fourreau · volant de contre-poupée', this.quillOut),
+      this.quillRange,
+      h('p', { class: 'note' }, 'On fait d’abord glisser la contre-poupée le long du banc (glisser son corps dans la vue 3D), puis on approche la pointe au contact de la face avec le volant, qui ne fait avancer que le fourreau.'),
       h('h3', {}, 'Historique', this.score),
       this.hist,
     );
@@ -116,6 +122,11 @@ export class ControlsModule {
     this.tailRange.value = t;
     this.tailRange.style.setProperty('--fill', `${t * 100}%`);
     this.tailOut.textContent = `pointe à ${fmt(m.s.tailZ - m.stock.faceZ(), 0)} mm de la face`;
+    const [, qMax] = m.quillLimits();
+    this.quillRange.max = Math.max(0.5, qMax);
+    this.quillRange.value = m.s.quill;
+    this.quillRange.style.setProperty('--fill', `${(m.s.quill / Math.max(0.5, qMax)) * 100}%`);
+    this.quillOut.textContent = `sorti de ${fmt(m.s.quill, 1)} mm`;
   }
 
   renderLog() {

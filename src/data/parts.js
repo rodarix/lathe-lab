@@ -129,13 +129,13 @@ export const PARTS = {
   },
   tailstock: {
     name: 'Contre-poupée', code: 'CP',
-    desc: 'Soutient l’extrémité des pièces longues avec une pointe, ou porte un foret pour le perçage axial.',
-    hint: 'Position : module B',
+    desc: 'Soutient l’extrémité des pièces longues avec une pointe, ou porte un foret pour le perçage axial. L’opérateur la fait glisser à la main le long du banc pour l’amener près de la pièce, puis approche la pointe au volant.',
+    hint: 'Glisser le long du banc pour la déplacer',
   },
   tailWheel: {
     name: 'Volant de contre-poupée', code: 'VC', drag: 'tail',
-    desc: 'Approche la contre-poupée et sa pointe de la pièce (ici 1 tour = 20 mm).',
-    hint: 'Glisser en tournant',
+    desc: 'Fait sortir ou rentrer le fourreau et sa pointe (1 tour = 5 mm, course 100 mm). Le corps de la contre-poupée ne bouge pas. Sens horaire : la pointe avance vers la pièce.',
+    hint: 'Glisser en tournant : avancer / reculer la pointe',
   },
   bed: {
     name: 'Banc', code: 'BN',

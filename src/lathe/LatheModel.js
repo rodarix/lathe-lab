@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { M, speedPlate, feedPlate, namePlate, warningSticker, threadMaterial } from './materials.js';
 import { box, cylX, cylY, cylZ, cylBetween, sphere, mesh, handwheel, lever, plate, tag } from './builders.js';
-import { Y_AX, MM, TAU, SPINDLE_NOSE_X, JAW_FACE_LOCAL, HANDWHEEL } from '../config.js';
+import { Y_AX, MM, TAU, SPINDLE_NOSE_X, JAW_FACE_LOCAL, HANDWHEEL, QUILL_MAX } from '../config.js';
 import { GEARBOX_RPM, FEEDS } from '../data/cutting.js';
 import { PARTS } from '../data/parts.js';
 
@@ -40,7 +40,8 @@ function arcShell(r, x0, x1, a0, a1, seg = 64) {
  *   crossPos        Group  z = r·MM               (enfant de carriage)
  *   compPos         Group  x = cz·MM              (enfant de crossPos : chariot sup. + tourelle + outil)
  *   spindleRot      Group  rotation.x = angle     (mandrin, mors, clé, pièce)
- *   tail            Group  x = faceX + tailZ·MM   (contre-poupée)
+ *   tail            Group  x = faceX + (tailZ + quill)·MM   (corps de contre-poupée)
+ *   quill           Group  x = −quill·MM          (enfant de tail : fourreau + pointe)
  *   guardPivot      Group  rotation.x (0 fermé → −0.75 ouvert)
  *   wheels.*        Group  userData.spin.rotation.z = angle du volant
  *   levers.*        Group  rotations d'état (voir update())
@@ -602,12 +603,16 @@ export class LatheModel {
     const ex = new THREE.Group();
     tail.add(ex);
     const y = Y_AX;
+    // Fourreau + pointe : seule partie mue par le volant (x = −sortie du fourreau)
+    const quill = new THREE.Group();
+    this.quill = quill;
     const cone = mesh(new THREE.ConeGeometry(0.011, 0.022, 32), M.steel);
     cone.rotation.z = Math.PI / 2; // pointe vers −X
     cone.position.set(0.011, y, 0);
-    ex.add(cone);
-    ex.add(cylX(0.011, 0.022, 0.036, y, 0, M.steel, 24, 0.014));
-    ex.add(cylX(0.024, 0.036, 0.11, y, 0, M.chrome, 40));
+    quill.add(cone);
+    quill.add(cylX(0.011, 0.022, 0.036, y, 0, M.steel, 24, 0.014));
+    quill.add(cylX(0.024, 0.036, 0.11 + QUILL_MAX * MM, y, 0, M.chrome, 40)); // la partie rentrée reste cachée dans le corps
+    ex.add(quill);
     ex.add(cylX(0.055, 0.1, 0.33, y, 0, M.blue, 48));
     ex.add(box(0.1, 0.33, 0.985, y, -0.055, 0.055, M.blue, 0.006));
     ex.add(box(0.09, 0.345, 0.985, 1.03, -0.1, 0.1, M.blue, 0.008));
@@ -672,14 +677,15 @@ export class LatheModel {
     this.carriage.position.x = fx + s.zc * MM;
     this.crossPos.position.z = s.r * MM;
     this.compPos.position.x = s.cz * MM;
-    this.tail.position.x = fx + s.tailZ * MM;
+    this.tail.position.x = fx + (s.tailZ + s.quill) * MM;
+    this.quill.position.x = -s.quill * MM;
     this.spindleRot.rotation.x = machine.spindleAngle;
 
     // Volants (sens horaire vu de face = rotation négative autour de l'axe du volant)
     this.wheels.carriage.userData.spin.rotation.z = -(s.zc / HANDWHEEL.carriage) * TAU;
     this.wheels.cross.userData.spin.rotation.z = (s.r / HANDWHEEL.cross) * TAU;
     this.wheels.compound.userData.spin.rotation.z = (s.cz / HANDWHEEL.compound) * TAU;
-    this.wheels.tail.userData.spin.rotation.z = (s.tailZ / HANDWHEEL.tail) * TAU;
+    this.wheels.tail.userData.spin.rotation.z = -(s.quill / HANDWHEEL.tail) * TAU;
 
     // Organes d'état
     const A = this.anim;

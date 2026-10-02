@@ -41,15 +41,15 @@ export function edgeLimit(zc, zt, rt) {
 }
 
 /** Obstacles fixes (rectangles Z×[0, rMax]) — le mandrin tourne : on prend son volume balayé. */
-export function obstacles(stock, tailZ, dims) {
+export function obstacles(stock, tailZ, dims, quill = 0) {
   const L = stock.L;
   const { JAW_LEN, JAW_H, CHUCK_BODY_LEN, CHUCK_R } = dims;
   return [
     { id: 'jaws', label: 'les mors du mandrin', part: 'spindle', z0: -L - JAW_LEN, z1: -L, rMax: stock.R0 + JAW_H },
     { id: 'chuck', label: 'le mandrin', part: 'spindle', z0: -L - JAW_LEN - CHUCK_BODY_LEN, z1: -L - JAW_LEN, rMax: CHUCK_R },
     { id: 'center', label: 'la pointe de contre-poupée', part: 'tailstock', z0: tailZ, z1: tailZ + 22, rMax: 9 },
-    { id: 'quill', label: 'le fourreau de contre-poupée', part: 'tailstock', z0: tailZ + 22, z1: tailZ + 110, rMax: 24 },
-    { id: 'tailBody', label: 'la contre-poupée', part: 'tailstock', z0: tailZ + 100, z1: tailZ + 420, rMax: 100 },
+    { id: 'quill', label: 'le fourreau de contre-poupée', part: 'tailstock', z0: tailZ + 22, z1: tailZ + quill + 110, rMax: 24 },
+    { id: 'tailBody', label: 'la contre-poupée', part: 'tailstock', z0: tailZ + quill + 100, z1: tailZ + quill + 420, rMax: 100 },
   ];
 }
 

@@ -35,7 +35,7 @@ npm run preview   # sert dist/ en local
   Alerte orange sous 2 mm, rouge + mouvement bloqué au contact, explication pédagogique, historique et score.
 - **Module A — Sécurité** : 9 étapes évaluées sur l'état réel de la machine, ordre imposé (désactivable),
   l'organe concerné clignote dans la vue 3D ; démarrage refusé avec explication (clé oubliée, protecteur ouvert…).
-- **Module B — Commandes** : localisation des 12 commandes, manuel vs automatique, 4 démonstrations
+- **Module B — Commandes** : localisation des 13 commandes, manuel vs automatique, 4 démonstrations
   (chariotage, dressage, dressage trop profond, avance jusqu'au mandrin), contre-poupée, historique.
 - **Module C — Vitesses** : matériau / outil / opération / Ø → Vc, N théorique, N de boîte, f, Vf, ap ;
   application à la machine ; jauge de Vc réelle au Ø de l'outil ; montage d'un nouveau brut (règle des 3 × Ø).

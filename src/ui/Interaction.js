@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { $ } from './dom.js';
 import { PARTS } from '../data/parts.js';
-import { HANDWHEEL, TAU } from '../config.js';
+import { HANDWHEEL, TAU, MM, Y_AX } from '../config.js';
 
 /**
  * Survol, clic et manipulation directe dans la vue 3D.
@@ -57,6 +57,17 @@ export class Interaction {
     this.down = { x: e.clientX, y: e.clientY };
     const id = this.pick(e);
     const p = PARTS[id];
+    if (id === 'tailstock' && !this.app.machine.s.exploded) {
+      // Contre-poupée : on la fait glisser le long du banc (le point suivi reste sous la souris)
+      this.app.stage.controls.enabled = false;
+      const x = this.axisX(e);
+      if (x != null) {
+        this.drag = { id, kind: 'slide', x0: x, tail0: this.app.machine.s.tailZ, moved: 0 };
+        this.canvas.setPointerCapture(e.pointerId);
+        this.canvas.classList.add('turning');
+      } else this.app.stage.controls.enabled = true;
+      return;
+    }
     if (p?.drag) {
       // Volant : on bloque l'orbite et on suit l'angle autour du centre projeté
       this.app.stage.controls.enabled = false;
@@ -73,7 +84,32 @@ export class Interaction {
     }
   }
 
+  /** Abscisse monde (m) visée par la souris sur un plan qui contient l'axe du tour et fait face à la caméra. */
+  axisX(e) {
+    const r = this.canvas.getBoundingClientRect();
+    this.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const cam = this.app.stage.camera;
+    this.ray.setFromCamera(this.ndc, cam);
+    const n = new THREE.Vector3();
+    cam.getWorldDirection(n);
+    n.x = 0;
+    if (n.lengthSq() < 1e-6) return null;
+    n.normalize();
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, new THREE.Vector3(0, Y_AX, 0));
+    const hit = new THREE.Vector3();
+    return this.ray.ray.intersectPlane(plane, hit) ? hit.x : null;
+  }
+
   onMove(e) {
+    if (this.drag?.kind === 'slide') {
+      const d = this.drag;
+      const x = this.axisX(e);
+      if (x == null) return;
+      const dz = (x - d.x0) / MM;
+      d.moved = Math.max(d.moved, Math.abs(dz) / 100); // > 0,05 dès 5 mm : ce n'est plus un clic
+      this.app.machine.act('tail', d.tail0 + dz);
+      return;
+    }
     if (this.drag) {
       const d = this.drag;
       const dist = Math.hypot(e.clientX - d.cx, e.clientY - d.cy);
@@ -125,7 +161,7 @@ export class Interaction {
     if (kind === 'carriage') m.move({ dzc: rev * HANDWHEEL.carriage });
     else if (kind === 'cross') m.move({ dr: -rev * HANDWHEEL.cross });
     else if (kind === 'compound') m.move({ dcz: -rev * HANDWHEEL.compound });
-    else if (kind === 'tail') m.act('tail', m.s.tailZ - rev * HANDWHEEL.tail);
+    else if (kind === 'tail') m.act('quill', m.s.quill + rev * HANDWHEEL.tail);
   }
 
   click(id) {

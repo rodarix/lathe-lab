@@ -2,7 +2,7 @@ import { Emitter } from '../core/Emitter.js';
 import { evaluate, obstacles } from './ToolGeometry.js';
 import {
   MM, TAU, LIMITS, JOG, WARN_CLEARANCE, SPINDLE_NOSE_X, JAW_FACE_LOCAL,
-  JAW_LEN, JAW_H, CHUCK_BODY_LEN, CHUCK_R,
+  JAW_LEN, JAW_H, CHUCK_BODY_LEN, CHUCK_R, QUILL_MAX,
 } from '../config.js';
 import { recommend, GEARBOX_RPM, FEEDS } from '../data/cutting.js';
 
@@ -49,7 +49,8 @@ export class Machine extends Emitter {
       zc: 40,
       cz: 0,
       r: 60,
-      tailZ: 650,
+      tailZ: 650, // pointe de contre-poupée
+      quill: 0, // sortie du fourreau (mm) : le corps est en tailZ + quill
       // Divers
       exploded: false,
       simSpeed: 1,
@@ -81,11 +82,18 @@ export class Machine extends Emitter {
   }
   zcLimits() {
     const min = (SPINDLE_NOSE_X + 0.035 - this.faceX) / MM; // flanc gauche du trainard contre la poupée
-    const max = Math.min(LIMITS.zMax, this.s.tailZ - 170, (0.72 - this.faceX) / MM);
+    const max = Math.min(LIMITS.zMax, this.s.tailZ + this.s.quill - 170, (0.72 - this.faceX) / MM);
     return [min, max];
   }
+  /** Limites de la POINTE quand on fait glisser le corps de contre-poupée (fourreau inchangé). */
   tailLimits() {
-    return [Math.max(this.stock.faceZ(), this.s.zc + 170), (0.56 - this.faceX) / MM];
+    const q = this.s.quill;
+    return [Math.max(this.stock.faceZ(), this.s.zc + 170 - q), (0.56 - this.faceX) / MM - q];
+  }
+  /** Limites de sortie du fourreau, corps de contre-poupée immobile. */
+  quillLimits() {
+    const base = this.s.tailZ + this.s.quill;
+    return [0, Math.max(0, Math.min(QUILL_MAX, base - this.stock.faceZ()))];
   }
   recommendation() {
     const s = this.s;
@@ -306,9 +314,19 @@ export class Machine extends Emitter {
         `Le trainard avance de ${String(THREAD_PITCH).replace('.', ',')} mm par tour vers le mandrin : préparez-vous à débrayer !`);
       return true;
     },
+    /** Déplacement de la contre-poupée le long du banc (z : position de la pointe). */
     tail(z) {
       const [a, b] = this.tailLimits();
       this.s.tailZ = clamp(z, a, b);
+      return true;
+    },
+    /** Volant de contre-poupée : sortie / rentrée du fourreau, le corps ne bouge pas. */
+    quill(q) {
+      const s = this.s;
+      const base = s.tailZ + s.quill;
+      const [a, b] = this.quillLimits();
+      s.quill = clamp(q, a, b);
+      s.tailZ = base - s.quill;
       return true;
     },
     simSpeed(v) {
@@ -334,6 +352,8 @@ export class Machine extends Emitter {
         keyIn: true, guardClosed: false, workpieceChecked: false, carriageLocked: false,
         zc: 40, cz: 0, r: this.stock.R0 + 30, autoFeed: null, halfNut: false,
       });
+      s.tailZ += s.quill;
+      s.quill = 0;
       s.tailZ = clamp(s.tailZ, ...this.tailLimits());
       this.path = [];
       this.emit('stock');
@@ -406,7 +426,7 @@ export class Machine extends Emitter {
   /* ------------------------------------------------------------------ mouvements */
 
   refresh() {
-    this.obs = obstacles(this.stock, this.s.tailZ, DIMS);
+    this.obs = obstacles(this.stock, this.s.tailZ, DIMS, this.s.quill);
     this.ev = evaluate(this.z, this.s.r, this.stock, this.obs);
   }
 

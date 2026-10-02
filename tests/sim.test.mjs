@@ -176,4 +176,26 @@ test('reconstruction du maillage après usinage', () => {
   for (let i = 0; i < nrm.length; i++) assert.ok(Number.isFinite(nrm[i]), 'normale NaN');
 });
 
+test('volant de contre-poupée : seul le fourreau avance, le corps reste en place', () => {
+  const { m } = ready();
+  m.act('tail', 300);
+  const body = m.s.tailZ + m.s.quill;
+  m.act('quill', 40);
+  assert.equal(m.s.quill, 40);
+  assert.equal(m.s.tailZ + m.s.quill, body, 'le corps n’a pas bougé');
+  assert.equal(m.s.tailZ, body - 40, 'la pointe a avancé de 40 mm');
+  m.act('quill', 1000); // butée : la pointe s'arrête sur la face de la pièce
+  assert.ok(m.s.tailZ >= m.stock.faceZ() - 1e-9);
+  assert.ok(m.s.quill <= 100);
+});
+
+test('déplacer la contre-poupée sur le banc garde la sortie du fourreau', () => {
+  const { m } = ready();
+  m.act('tail', 400);
+  m.act('quill', 20);
+  m.act('tail', 350);
+  assert.equal(m.s.quill, 20);
+  assert.equal(m.s.tailZ, 350);
+});
+
 console.log(`\n${passed} tests OK`);

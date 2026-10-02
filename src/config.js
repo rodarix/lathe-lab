@@ -28,7 +28,10 @@ export const JAW_H = 24;
 export const GRIP_LEN = 30;
 
 /** Déplacement par tour de volant (mm). Transversal : au rayon (8 mm au Ø). */
-export const HANDWHEEL = { carriage: 30, cross: 4, compound: 2.5, tail: 20 };
+export const HANDWHEEL = { carriage: 30, cross: 4, compound: 2.5, tail: 5 };
+
+/** Course du fourreau de contre-poupée (mm), commandée par le volant de contre-poupée. */
+export const QUILL_MAX = 100;
 
 /** Courses (mm). */
 export const LIMITS = { rMin: 0, rMax: 170, zMax: 420, czMin: -40, czMax: 60 };
