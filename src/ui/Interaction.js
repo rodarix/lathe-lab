@@ -32,6 +32,9 @@ export class Interaction {
     this.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     this.ray.setFromCamera(this.ndc, this.app.stage.camera);
     const hits = this.ray.intersectObjects(this.app.model.pickables, false);
+    // Une vitre transparente (protecteur) ne masque pas les organes situés derrière elle :
+    // on ne la retient que si rien d'autre n'est touché.
+    let glass = null;
     for (const hit of hits) {
       let o = hit.object;
       let visible = true;
@@ -39,9 +42,14 @@ export class Interaction {
         if (!o.visible) visible = false;
         o = o.parent;
       }
-      if (visible) return hit.object.userData.part;
+      if (!visible) continue;
+      if (hit.object.userData.seeThrough) {
+        glass ??= hit.object.userData.part;
+        continue;
+      }
+      return hit.object.userData.part;
     }
-    return null;
+    return glass;
   }
 
   onDown(e) {

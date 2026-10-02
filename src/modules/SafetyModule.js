@@ -42,7 +42,7 @@ export const STEPS = [
   },
   {
     action: 'guard', target: 'guard', btn: 'Fermer le protecteur',
-    title: 'Fermer le protecteur de mandrin',
+    title: 'Fermer le protecteur',
     text: 'Il protège des projections et commande un contact de sécurité : ouvert, la broche ne démarre pas.',
     done: (s) => s.guardClosed,
   },
@@ -65,7 +65,7 @@ export const STEPS = [
   {
     action: 'spindleCycle', target: 'spindleLever', btn: 'Démarrer la broche',
     title: 'Démarrer la broche',
-    text: 'Levier de marche vers le haut (marche avant). Rester face à la machine, hors de l’axe de projection du mandrin.',
+    text: 'Appuyer sur l’interrupteur vert, sur le dessus de la poupée fixe. Rester face à la machine, hors de l’axe de projection du mandrin.',
     done: (s) => s.spindleDir !== 0,
   },
 ];
@@ -120,7 +120,7 @@ export class SafetyModule {
         h('ul', { class: 'rules' }, RULES.map((r) => h('li', {}, r)))),
       h('details', { class: 'fold' },
         h('summary', { class: 'lbl' }, 'Arrêter la machine'),
-        h('p', { style: { marginTop: '8px', fontSize: '12.5px' } }, 'Arrêt normal : levier de marche au milieu. Urgence : coup-de-poing rouge (Échap) ou barre de freinage au pied.'),
+        h('p', { style: { marginTop: '8px', fontSize: '12.5px' } }, 'Arrêt normal : nouvel appui sur l’interrupteur vert. Urgence : coup-de-poing rouge (Échap) ou barre de freinage au pied.'),
         h('div', { style: { display: 'flex', gap: '6px', marginTop: '10px', flexWrap: 'wrap' } },
           h('button', { class: 'btn sm', onclick: () => m.act('spindle', 0) }, 'Arrêt broche'),
           h('button', { class: 'btn sm', onclick: () => m.act('brake') }, 'Barre de frein'),

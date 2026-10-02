@@ -27,7 +27,7 @@ npm run preview   # sert dist/ en local
 - **Scène 3D** : tour procédural (bâti bleu, carters blancs, barre de freinage rouge), atelier sombre,
   orbite / déplacement / zoom, marche au clavier (ZQSD ou WASD), vues prédéfinies, vue éclatée avec étiquettes.
 - **Manipulation directe** : chaque organe s'éclaire au survol ; clic = fiche + action (retirer la clé,
-  fermer le protecteur, bloquer le trainard, levier de marche…) ; les **volants se tournent** en glissant
+  fermer le protecteur, bloquer le trainard, interrupteur vert de marche…) ; les **volants se tournent** en glissant
   autour de leur centre (en 3D ou dans la barre du bas), à la molette ou aux flèches.
 - **Usinage réel** : le brut est un profil (tranches de 0,25 mm) réellement enlevé par l'arête ;
   surface brute mate / usinée brillante ; copeaux ; avance automatique f × N.

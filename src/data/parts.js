@@ -55,8 +55,8 @@ export const PARTS = {
     hint: 'Cliquer : vérifier le serrage',
   },
   guard: {
-    name: 'Protecteur de mandrin', code: 'PR', action: 'guard',
-    desc: 'Écran mobile qui protège des projections et du contact avec le mandrin. Un contact de sécurité empêche le démarrage s’il est ouvert.',
+    name: 'Protecteur', code: 'PR', action: 'guard',
+    desc: 'Carter articulé sur toute la longueur du tour, avec une vitre transparente : il protège des projections de copeaux et du contact avec le mandrin tout en laissant voir l’usinage. Un contact de sécurité empêche le démarrage s’il est ouvert.',
     hint: 'Cliquer : ouvrir / fermer',
   },
   carriage: {
@@ -90,8 +90,9 @@ export const PARTS = {
     hint: 'Cliquer : embrayer / débrayer',
   },
   spindleLever: {
-    name: 'Levier de marche broche', code: 'MB', action: 'spindleCycle',
-    desc: 'Haut : marche avant — milieu : arrêt — bas : marche arrière. Une tringle le long du banc permet de le commander depuis le trainard.',
+    name: 'Interrupteur de marche broche', code: 'MB', action: 'spindleCycle',
+    desc: 'Bouton vert sur le dessus de la poupée fixe : un appui met la broche en rotation (le bouton reste enfoncé et s’allume), un nouvel appui l’arrête.',
+    safety: 'Avant d’appuyer : clé retirée, protecteur fermé, outil dégagé de la pièce.',
     hint: 'Cliquer : marche / arrêt',
   },
   crossSlide: {
@@ -142,7 +143,7 @@ export const PARTS = {
   },
   leadscrew: {
     name: 'Vis mère & barre de chariotage', code: 'VM',
-    desc: 'La barre de chariotage entraîne les avances automatiques ; la vis mère sert uniquement au filetage. La tringle du bas commande la broche.',
+    desc: 'La barre de chariotage entraîne les avances automatiques ; la vis mère sert uniquement au filetage.',
   },
   brakeBar: {
     name: 'Barre de freinage', code: 'FR', action: 'brake',

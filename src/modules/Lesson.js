@@ -96,7 +96,7 @@ export class Lesson {
       },
       {
         title: 'Dégager et arrêter',
-        text: 'Reculez l’outil au-dessus de la pièce (↓ ou volant transversal), débloquez le trainard, puis arrêtez la broche (levier au milieu ou Espace).',
+        text: 'Reculez l’outil au-dessus de la pièce (↓ ou volant transversal), débloquez le trainard, puis arrêtez la broche (interrupteur vert sur la poupée ou Espace).',
         task: 'Outil dégagé, trainard libre, broche arrêtée',
         check: () => !m.running && !m.s.carriageLocked && m.ev.workClear > 2,
         pulse: ['spindleLever', 'carriageLock'],

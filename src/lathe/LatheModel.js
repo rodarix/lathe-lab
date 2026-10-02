@@ -9,6 +9,28 @@ import { PARTS } from '../data/parts.js';
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const approach = (cur, target, rate, dt) => cur + (target - cur) * Math.min(1, rate * dt);
 
+/** Portion de cylindre d'axe X (rayon r, de x0 à x1) entre les angles a0 et a1 :
+ *  y = r·sin φ, z = r·cos φ (φ = 0 vers l'avant, π/2 en haut). */
+function arcShell(r, x0, x1, a0, a1, seg = 64) {
+  const pos = [];
+  const idx = [];
+  for (let i = 0; i <= seg; i++) {
+    const phi = a0 + ((a1 - a0) * i) / seg;
+    const y = r * Math.sin(phi);
+    const z = r * Math.cos(phi);
+    pos.push(x0, y, z, x1, y, z);
+    if (i < seg) {
+      const k = i * 2;
+      idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
 /**
  * Tour parallèle procédural (placeholder réaliste) + « rig » d'animation.
  *
@@ -19,7 +41,7 @@ const approach = (cur, target, rate, dt) => cur + (target - cur) * Math.min(1, r
  *   compPos         Group  x = cz·MM              (enfant de crossPos : chariot sup. + tourelle + outil)
  *   spindleRot      Group  rotation.x = angle     (mandrin, mors, clé, pièce)
  *   tail            Group  x = faceX + tailZ·MM   (contre-poupée)
- *   guardPivot      Group  rotation.x (0 fermé → −1.8 ouvert)
+ *   guardPivot      Group  rotation.x (0 fermé → −0.75 ouvert)
  *   wheels.*        Group  userData.spin.rotation.z = angle du volant
  *   levers.*        Group  rotations d'état (voir update())
  * La POINTE de l'outil est à l'origine locale de compPos (x = 0, y = Y_AX, z = 0).
@@ -44,7 +66,7 @@ export class LatheModel {
     this.selected = null;
     this.pulse = [];
     this.alert = null;
-    this.anim = { key: 0, guard: 1, clamp: 1, lock: 0, feed: 0, spindle: 0.2, nut: 1.1, estop: 0, brake: 0 };
+    this.anim = { key: 0, guard: 1, clamp: 1, lock: 0, feed: 0, spindle: 0, nut: 1.1, estop: 0, brake: 0 };
 
     this._buildBase();
     this._buildBed();
@@ -208,6 +230,21 @@ export class LatheModel {
     tag(speed, 'speedLevers');
     hs.add(speed);
 
+    // Interrupteur vert de marche broche, sur le dessus de la poupée fixe
+    const sw = new THREE.Group();
+    sw.position.set(-0.8, 1.38, 0.1);
+    sw.add(box(-0.04, 0.04, 0, 0.022, -0.04, 0.04, M.black, 0.005)); // boîtier
+    sw.add(cylY(0.026, 0.022, 0.03, 0, 0, M.chrome, 40)); // collerette
+    const btnCap = cylY(0.019, 0, 0.016, 0, 0, M.green.clone(), 40);
+    btnCap.position.y = 0.03;
+    btnCap.userData.ownMat = true; // matériau propre : l'éclairage « en marche » sert de base aux surbrillances
+    btnCap.userData.baseEmissive = new THREE.Color(0, 0, 0);
+    btnCap.material.emissiveIntensity = 1;
+    sw.add(btnCap);
+    tag(sw, 'spindleLever');
+    this.levers.spindle = btnCap;
+    hs.add(sw);
+
     // Arrêt d'urgence
     const es = new THREE.Group();
     es.position.set(-0.92, 1.3, 0.2);
@@ -339,36 +376,86 @@ export class LatheModel {
   /* ================================================================ protecteur */
 
   _buildGuard() {
+    // Protecteur articulé à l'arrière, sur toute la longueur du tour :
+    // cadre blanc + vitre en polycarbonate transparente sur toute sa surface.
     const R = 0.2;
-    const t0 = Math.PI + 0.2;
-    const tl = Math.PI + 0.25;
-    const hy = R * Math.sin(0.2);
-    const hz = -R * Math.cos(0.2);
+    const PHI_BACK = Math.PI - 0.2; // bord arrière (charnière), angle mesuré depuis +Z (avant) vers +Y (haut)
+    const PHI_FRONT = 0.55; // bord avant de la partie longue : passe au-dessus de la tourelle et de son levier
+    const PHI_CHUCK = -0.45; // au droit du mandrin, le protecteur descend plus bas côté opérateur
+    const X0 = -0.46; // contre la poupée fixe
+    const XC = -0.36; // fin de la zone mandrin
+    const X1 = 0.95; // bout du banc
+    const hy = R * Math.sin(PHI_BACK);
+    const hz = R * Math.cos(PHI_BACK);
     const ex = new THREE.Group();
     const pivot = new THREE.Group();
     pivot.position.set(0, Y_AX + hy, hz);
     ex.add(pivot);
-
-    // Couvre uniquement le mandrin (x ∈ [−0,46 ; −0,36]) : la pièce reste visible et accessible
-    const X0 = -0.46;
-    const X1 = -0.36;
-    const shellGeo = new THREE.CylinderGeometry(R, R, X1 - X0, 48, 1, true, t0, tl);
-    const shell = mesh(shellGeo, M.whiteDS);
-    shell.rotation.z = -Math.PI / 2;
-    shell.position.set((X0 + X1) / 2, -hy, -hz);
+    // Repère « axe de broche » dans le repère du pivot
+    const shell = new THREE.Group();
+    shell.position.set(0, -hy, -hz);
     pivot.add(shell);
-    const capGeo = new THREE.RingGeometry(0.105, R, 48, 1, 0.2, tl);
-    const cap = mesh(capGeo, M.whiteDS);
-    cap.rotation.y = Math.PI / 2;
-    cap.position.set(X1, -hy, -hz);
-    pivot.add(cap);
-    // Poignée à l'avant
-    const hA = Math.PI * 2 + 0.25;
-    const hyL = -R * Math.sin(hA) - hy;
-    const hzL = R * Math.cos(hA) - hz;
-    pivot.add(cylX(0.007, X0 + 0.02, X1 - 0.015, hyL, hzL + 0.018, M.black, 12));
-    pivot.add(cylBetween(new THREE.Vector3(X0 + 0.025, hyL, hzL), new THREE.Vector3(X0 + 0.025, hyL, hzL + 0.018), 0.004, M.black));
-    pivot.add(cylBetween(new THREE.Vector3(X1 - 0.02, hyL, hzL), new THREE.Vector3(X1 - 0.02, hyL, hzL + 0.018), 0.004, M.black));
+
+    const P = (r, phi) => [r * Math.sin(phi), r * Math.cos(phi)]; // → [y, z]
+    const glass = (geo) => {
+      const m = mesh(geo, M.polycarb, { cast: false, receive: false });
+      m.userData.seeThrough = true;
+      m.renderOrder = 2;
+      return m;
+    };
+    /** Arc de tube (montant du cadre) d'axe X, à l'abscisse x. */
+    const ribGeo = (r, tube, a0, a1) => {
+      const g = new THREE.TorusGeometry(r, tube, 8, 64, a1 - a0);
+      g.rotateZ(a0);
+      g.rotateY(-Math.PI / 2); // (cos a, sin a, 0) → (0, sin a, cos a) : φ = a
+      return g;
+    };
+    /** Secteur plan (joue) dans le plan YZ, à l'abscisse x. */
+    const cheekGeo = (r0, r1, a0, a1) => {
+      const g = new THREE.RingGeometry(r0, r1, 48, 1, a0, a1 - a0);
+      g.rotateY(-Math.PI / 2);
+      return g;
+    };
+    // Vitres : grande coque sur toute la longueur + jupe avant au droit du mandrin
+    const longGlass = glass(arcShell(R, X0, X1, PHI_FRONT, PHI_BACK));
+    shell.add(longGlass);
+    shell.add(glass(arcShell(R, X0, XC, PHI_CHUCK, PHI_FRONT)));
+    // Joues : côté contre-poupée (bout du banc) et fin de la jupe mandrin
+    const endCheek = glass(cheekGeo(0.12, R, PHI_FRONT, PHI_BACK));
+    endCheek.position.x = X1;
+    shell.add(endCheek);
+    const chuckCheek = glass(cheekGeo(0.105, R, PHI_CHUCK, PHI_FRONT));
+    chuckCheek.position.x = XC;
+    shell.add(chuckCheek);
+
+    // Cadre blanc : arceaux, lisses longitudinales
+    const tube = 0.006;
+    const rib = (x, a0, a1) => {
+      const m = mesh(ribGeo(R, tube, a0, a1), M.white);
+      m.position.x = x;
+      shell.add(m);
+    };
+    rib(X0 + tube, PHI_CHUCK, PHI_BACK);
+    rib(XC, PHI_CHUCK, PHI_FRONT);
+    rib(X1, PHI_FRONT, PHI_BACK);
+    [0.06, 0.5].forEach((x) => rib(x, PHI_FRONT, PHI_BACK));
+    const rail = (x0, x1, phi) => {
+      const [y, z] = P(R, phi);
+      shell.add(cylX(tube, x0, x1, y, z, M.white, 12));
+    };
+    rail(X0, X1, PHI_FRONT); // lisse avant
+    rail(X0, X1, Math.PI / 2 + 0.25); // lisse supérieure
+    rail(X0, XC, PHI_CHUCK); // bord bas de la jupe mandrin
+
+    // Poignée sur la lisse avant, à portée de main près du mandrin
+    const [hy0, hz0] = P(R, PHI_FRONT);
+    const [hy1, hz1] = P(R + 0.03, PHI_FRONT - 0.05);
+    const hx0 = -0.3;
+    const hx1 = -0.12;
+    shell.add(cylX(0.007, hx0, hx1, hy1, hz1, M.black, 12));
+    shell.add(cylBetween(new THREE.Vector3(hx0 + 0.005, hy0, hz0), new THREE.Vector3(hx0 + 0.005, hy1, hz1), 0.004, M.black));
+    shell.add(cylBetween(new THREE.Vector3(hx1 - 0.005, hy0, hz0), new THREE.Vector3(hx1 - 0.005, hy1, hz1), 0.004, M.black));
+
     pivot.add(cylX(0.012, X0, X1, 0, 0, M.steelDark, 16)); // charnière
     tag(ex, 'guard');
     this.guardPivot = pivot;
@@ -427,16 +514,6 @@ export class LatheModel {
     tag(knob, 'feedLever');
     apron.add(knob);
 
-    // Levier de marche broche, sur le flanc droit du tablier
-    const sl = new THREE.Group();
-    sl.position.set(0.205, 0.78, 0.262);
-    sl.add(cylX(0.016, -0.003, 0.012, 0, 0, M.chrome));
-    const slArm = lever({ len: 0.12, r: 0.006, knob: 0.015, knobMat: M.red });
-    slArm.position.x = 0.012;
-    sl.add(slArm);
-    tag(sl, 'spindleLever');
-    this.levers.spindle = slArm;
-    apron.add(sl);
     tag(apron, 'apron');
     car.add(this.addAssembly(apron, [0, -0.08, 0.4], 'apron', [0.09, 0.64, 0.3]));
 
@@ -612,7 +689,8 @@ export class LatheModel {
     this.keyParked.visible = A.key > 0.9;
 
     A.guard = approach(A.guard, s.guardClosed ? 0 : 1, 4, dt);
-    this.guardPivot.rotation.x = -1.8 * ease(A.guard);
+    // Ouverture limitée : le protecteur long ne doit pas traverser l'écran arrière
+    this.guardPivot.rotation.x = -0.75 * ease(A.guard);
 
     A.clamp = approach(A.clamp, s.toolClamped ? 0 : 1, 8, dt);
     this.levers.clamp.rotation.y = 0.3 + A.clamp * 1.3;
@@ -627,9 +705,12 @@ export class LatheModel {
     A.nut = approach(A.nut, s.halfNut ? 0.3 : 1.1, 10, dt);
     this.levers.nut.inner.rotation.x = A.nut;
 
-    const spTarget = s.spindleDir > 0 ? -0.35 : s.spindleDir < 0 ? 1.1 : 0.4;
-    A.spindle = approach(A.spindle, spTarget, 10, dt);
-    this.levers.spindle.rotation.x = A.spindle;
+    // Interrupteur vert : enfoncé et allumé quand la broche tourne
+    A.spindle = approach(A.spindle, machine.running ? 1 : 0, 12, dt);
+    const btn = this.levers.spindle;
+    btn.position.y = 0.03 + 0.008 * (1 - A.spindle);
+    btn.userData.baseEmissive.setRGB(0.02 * A.spindle, 0.55 * A.spindle, 0.12 * A.spindle);
+    if (!this._tinted?.includes(btn)) btn.material.emissive.copy(btn.userData.baseEmissive);
 
     A.estop = approach(A.estop, s.estop ? 1 : 0, 14, dt);
     this.levers.estop.position.z = -0.008 * A.estop;

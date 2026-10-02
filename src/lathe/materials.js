@@ -24,6 +24,12 @@ export const M = {
   lampOn: std(0xfff4d6, 0.4, 0.1, { emissive: 0xfff0c8, emissiveIntensity: 2.2 }),
   ledOff: std(0x2a3a2a, 0.3, 0.1),
   ledOn: std(0x7dff9a, 0.3, 0.1, { emissive: 0x3dff6a, emissiveIntensity: 2.5 }),
+  // Vitre du protecteur (polycarbonate) : transparente, n'écrit pas la profondeur pour laisser voir la pièce
+  polycarb: std(0xb8def2, 0.05, 0, {
+    transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false,
+  }),
+  // Bouton de marche broche (vert) : s'allume quand la broche tourne (piloté dans update)
+  green: std(0x1fa64a, 0.35, 0.05, { emissive: 0x2dff6a, emissiveIntensity: 0 }),
 };
 
 /** Textures dessinées au canvas (aucun fichier externe). */

@@ -8,7 +8,7 @@ const COMMANDS = [
   ['carriageLock', 'À serrer pour dresser'],
   ['feedLever', 'Chariotage / dressage automatique'],
   ['halfNut', 'Filetage — mouvement rapide'],
-  ['spindleLever', 'Marche avant / arrêt / arrière'],
+  ['spindleLever', 'Bouton vert : marche / arrêt broche'],
   ['speedLevers', 'N — broche arrêtée uniquement'],
   ['gearbox', 'Avance f en mm/tr'],
   ['tailstock', 'Pointe, perçage'],

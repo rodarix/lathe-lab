@@ -363,7 +363,7 @@ export class Machine extends Emitter {
       if (s.keyIn) return fail('danger', 'Accident évité : clé dans le mandrin',
         'Au démarrage, la clé aurait été projetée vers vous. Retirez-la toujours dès le serrage terminé.');
       if (!s.guardClosed) return fail('warn', 'Interverrouillage : protecteur ouvert',
-        'La broche ne peut pas démarrer tant que le protecteur de mandrin est ouvert.');
+        'La broche ne peut pas démarrer tant que le protecteur est ouvert.');
       if (!s.toolClamped) return fail('danger', 'Outil non bridé',
         'L’effort de coupe arracherait l’outil. Serrez la tourelle avant de démarrer.');
       if (!s.ppe) return fail('warn', 'EPI non vérifiés', 'Confirmez le port des EPI (module A, étape 1).');
